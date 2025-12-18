@@ -50,15 +50,15 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="AecBaseMgd">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2024\ACA\AecBaseMgd.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\ACA\AecBaseMgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="AeccDbMgd">
-      <HintPath>$(Civil3D2024Dir)AeccDbMgd.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="AeccDbMgd, Version=13.6.2053.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\C3D\AeccDbMgd.dll</HintPath>
     </Reference>
     <Reference Include="Autodesk.AEC.Interop.UIBase">
-      <HintPath>..\..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2024\ACA\Autodesk.AEC.Interop.UIBase.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\ACA\Autodesk.AEC.Interop.UIBase.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
   </ItemGroup>
@@ -72,28 +72,13 @@
     <Compile Include="AssemblyInfo.vb" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SDT.Core\SDT.Core.vbproj">
-      <Project>{5E81ACFC-BA08-4BFE-AC3B-92281D3CC43A}</Project>
-      <Name>SDT.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SDT.Civil.Services\SDT.Civil.Services.vbproj">
-      <Project>{41C78258-E822-45E3-9BEC-291F6393B52A}</Project>
-      <Name>SDT.Civil.Services</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SDT.Drawing\SDT.Drawing.vbproj">
-      <Project>{93d815de-5928-4af5-b756-fc7d29b6019a}</Project>
-      <Name>SDT.Drawing</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SDT.Geometry\SDT.Geometry.vbproj">
-      <Project>{f026044a-2e73-47aa-b9d5-f37456f68f6c}</Project>
-      <Name>SDT.Geometry</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Analyzer Include="..\..\..\..\..\..\..\Program Files\Autodesk\Civil 3D 2024 Object Enabler\AeccDbMgd.dll" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>
