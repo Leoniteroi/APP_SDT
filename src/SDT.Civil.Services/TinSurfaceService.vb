@@ -45,7 +45,15 @@ Namespace SDT.Civil
             End Try
         End Sub
 
-        Public Shared Function CopyFromTinSurface(db As Database,
+        ''' <summary>
+        ''' CLONA uma TinSurface (cÃ³pia independente) usando DeepCloneObjects.
+        ''' Substitui qualquer abordagem baseada em PasteSurface.
+        ''' </summary>
+        ''' <remarks>
+        ''' - NÃ£o cria dependÃªncia/ligaÃ§Ã£o entre superfÃ­cies.
+        ''' - Mais estÃ¡vel para processamento em lote.
+        ''' </remarks>
+        Public Shared Function CloneTinSurface(db As Database,
                                                   tr As Transaction,
                                                   civDoc As CivilDocument,
                                                   sourceTinId As ObjectId,
@@ -88,6 +96,21 @@ Namespace SDT.Civil
 
             Return newId
         End Function
+
+        ''' <summary>
+        ''' Compatibilidade: mantenha chamadas antigas.
+        ''' Use <see cref="CloneTinSurface"/> no lugar.
+        ''' </summary>
+<Obsolete("Use CloneTinSurface no lugar de CopyFromTinSurface (evita PasteSurface e dependÃªncias).")>
+Public Shared Function CopyFromTinSurface(db As Database,
+                                          tr As Transaction,
+                                          civDoc As CivilDocument,
+                                          sourceTinId As ObjectId,
+                                          newName As String,
+                                          ed As Editor) As ObjectId
+    Return CloneTinSurface(db, tr, civDoc, sourceTinId, newName, ed)
+End Function
+
 
         Public Shared Sub RaiseTinSurface(tin As TinSurface, raise As Double)
             If tin Is Nothing Then Exit Sub
@@ -134,9 +157,9 @@ Namespace SDT.Civil
 
                 Dim bdType As Type = bdObj.GetType()
 
-                ' Procura um método "Add*" que receba:
+                ' Procura um mtodo "Add*" que receba:
                 '  - (ObjectId, Double, Enum boundaryType, Boolean)
-                ' ou variações com 3/4/5 params.
+                ' ou variaes com 3/4/5 params.
                 Dim chosen As MethodInfo = Nothing
                 Dim chosenParams As ParameterInfo() = Nothing
 
@@ -174,7 +197,7 @@ Namespace SDT.Civil
 
                 If chosen Is Nothing Then
                     If ed IsNot Nothing Then
-                        ed.WriteMessage(Environment.NewLine & "[SDT] Não achei método Add* compatível em BoundariesDefinition: " & bdType.FullName)
+                        ed.WriteMessage(Environment.NewLine & "[SDT] No achei mtodo Add* compatvel em BoundariesDefinition: " & bdType.FullName)
                     End If
                     Exit Sub
                 End If
@@ -206,7 +229,7 @@ Namespace SDT.Civil
                     If pt Is GetType(Boolean) Then
                         args(i) = keepEntities
                     ElseIf pt Is GetType(Double) Then
-                        ' alguns overloads repetem tolerância etc.
+                        ' alguns overloads repetem tolerncia etc.
                         args(i) = 0.0R
                     ElseIf pt Is GetType(Integer) Then
                         args(i) = 0
