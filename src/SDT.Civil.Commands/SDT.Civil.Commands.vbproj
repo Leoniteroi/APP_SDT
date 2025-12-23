@@ -61,27 +61,6 @@
       <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\ACA\Autodesk.AEC.Interop.UIBase.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-  </ItemGroup>
-  <!-- Referências internas (necessárias para resolver Imports SDT.* e serviços) -->
-  <ItemGroup>
-    <ProjectReference Include="..\SDT.Core\SDT.Core.vbproj">
-      <Project>{5E81ACFC-BA08-4BFE-AC3B-92281D3CC43A}</Project>
-      <Name>SDT.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SDT.Drawing\SDT.Drawing.vbproj">
-      <Project>{93D815DE-5928-4AF5-B756-FC7D29B6019A}</Project>
-      <Name>SDT.Drawing</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SDT.Geometry\SDT.Geometry.vbproj">
-      <Project>{F026044A-2E73-47AA-B9D5-F37456F68F6C}</Project>
-      <Name>SDT.Geometry</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SDT.Civil.Services\SDT.Civil.Services.vbproj">
-      <Project>{41C78258-E822-45E3-9BEC-291F6393B52A}</Project>
-      <Name>SDT.Civil.Services</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MyCommands.vb" />
@@ -100,9 +79,6 @@
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

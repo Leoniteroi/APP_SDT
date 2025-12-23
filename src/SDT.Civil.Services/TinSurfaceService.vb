@@ -2,8 +2,6 @@ Option Strict On
 Option Explicit On
 
 Imports System
-Imports System.Collections
-Imports System.Collections.Generic
 Imports System.Reflection
 Imports Autodesk.AutoCAD.DatabaseServices
 Imports Autodesk.AutoCAD.EditorInput
@@ -103,15 +101,15 @@ Namespace SDT.Civil
         ''' Compatibilidade: mantenha chamadas antigas.
         ''' Use <see cref="CloneTinSurface"/> no lugar.
         ''' </summary>
-        <Obsolete("Use CloneTinSurface no lugar de CopyFromTinSurface (evita PasteSurface e dependências).")>
-        Public Shared Function CopyFromTinSurface(db As Database,
+<Obsolete("Use CloneTinSurface no lugar de CopyFromTinSurface (evita PasteSurface e dependências).")>
+Public Shared Function CopyFromTinSurface(db As Database,
                                           tr As Transaction,
                                           civDoc As CivilDocument,
                                           sourceTinId As ObjectId,
                                           newName As String,
                                           ed As Editor) As ObjectId
-            Return CloneTinSurface(db, tr, civDoc, sourceTinId, newName, ed)
-        End Function
+    Return CloneTinSurface(db, tr, civDoc, sourceTinId, newName, ed)
+End Function
 
 
         Public Shared Sub RaiseTinSurface(tin As TinSurface, raise As Double)
@@ -141,97 +139,16 @@ Namespace SDT.Civil
             End Try
         End Sub
 
-        ''' <summary>
-        ''' Retorna True se a superfície aparenta ter triangulação (>=3 vértices).
-        ''' (Usado para evitar NoTrianglesInSurface ao aplicar boundaries.)
-        ''' </summary>
-        Private Shared Function HasTriangulation(tin As TinSurface) As Boolean
-            If tin Is Nothing Then Return False
-            ' Alguns builds do Civil 3D não expõem GetVertices como membro público;
-            ' para manter compatibilidade + Option Strict On, use reflection.
-            Try
-                Dim t As Type = tin.GetType()
-                Dim mi As MethodInfo = t.GetMethod("GetVertices",
-                                                  BindingFlags.Instance Or BindingFlags.Public Or BindingFlags.NonPublic,
-                                                  Nothing,
-                                                  New Type() {GetType(Boolean)},
-                                                  Nothing)
-
-                If mi Is Nothing Then Return False
-
-                Dim res As Object = mi.Invoke(tin, New Object() {False})
-                If res Is Nothing Then Return False
-
-                Dim coll As ICollection = TryCast(res, ICollection)
-                If coll IsNot Nothing Then
-                    Return coll.Count >= 3
-                End If
-
-                ' Fallback: se vier como IEnumerable, conta até 3
-                Dim en As IEnumerable = TryCast(res, IEnumerable)
-                If en Is Nothing Then Return False
-                Dim c As Integer = 0
-                For Each item As Object In en
-                    c += 1
-                    If c >= 3 Then Return True
-                Next
-                Return False
-            Catch
-                Return False
-            End Try
-        End Function
-
-        Private Shared Sub TryRebuild(tin As TinSurface, ed As Editor, context As String)
-            If tin Is Nothing Then Exit Sub
-            Try
-                tin.Rebuild()
-            Catch ex As Exception
-                If ed IsNot Nothing Then ed.WriteMessage(Environment.NewLine & $"[SDT] Rebuild falhou ({context}): {ex.Message}")
-            End Try
-        End Sub
-
-        ''' <summary>
-        ''' Aplica boundary OUTER em uma TinSurface usando entidades (Polyline(s)) que definem o contorno.
-        ''' 
-        ''' Observação:
-        ''' - Em Civil 3D 2024 o método comum é:
-        '''   BoundariesDefinition.AddBoundaries(ObjectIdCollection, Double, SurfaceBoundaryType, Boolean)
-        ''' - Se tentar aplicar boundary em uma TIN sem triângulos, a API lança NoTrianglesInSurface.
-        ''' </summary>
         Public Shared Sub ApplyOuterBoundary(tin As TinSurface,
-                                             boundaryEntIds As ObjectIdCollection,
-                                             midOrdinate As Double,
-                                             useNonDestructiveBreakline As Boolean,
-                                             ed As Editor)
+                                     boundaryPolylineId As ObjectId,
+                                     midOrdinate As Double,
+                                     keepEntities As Boolean,
+                                     ed As Editor)
 
             If tin Is Nothing Then Exit Sub
-            If boundaryEntIds Is Nothing OrElse boundaryEntIds.Count = 0 Then Exit Sub
-
-            ' Garantir triangulação antes de aplicar boundary
-            'TryRebuild(tin, ed, "ApplyOuterBoundary-pre")
-            'If Not HasTriangulation(tin) Then
-            'If ed IsNot Nothing Then ed.WriteMessage(Environment.NewLine & $"[SDT] Boundary ignorado: superfície '{tin.Name}' sem triângulos.")
-            'Exit Sub
-            'End If
-
-            ' Garantir mid-ordinate válido
-            If midOrdinate <= 0 Then midOrdinate = 1.0
+            If boundaryPolylineId.IsNull Then Exit Sub
 
             Try
-                ' Caminho preferencial: chamada tipada (sem reflection)
-                ' Na maioria das versões: SurfaceDefinitionBoundaries.AddBoundaries(ObjectIdCollection, Double, SurfaceBoundaryType, Boolean)
-                Dim bd As SurfaceDefinitionBoundaries = tin.BoundariesDefinition
-                If bd IsNot Nothing Then
-                    Try
-                        bd.AddBoundaries(boundaryEntIds, midOrdinate, SurfaceBoundaryType.Outer, useNonDestructiveBreakline)
-                        TryRebuild(tin, ed, "ApplyOuterBoundary-post")
-                        Return
-                    Catch
-                        ' Se esta sobrecarga não existir, cai para reflection abaixo
-                    End Try
-                End If
-
-                ' Fallback por reflection: procurar ESPECIFICAMENTE "AddBoundaries" e sobrecargas comuns
                 Dim bdObj As Object = tin.BoundariesDefinition
                 If bdObj Is Nothing Then
                     If ed IsNot Nothing Then ed.WriteMessage(Environment.NewLine & "[SDT] BoundariesDefinition = Nothing.")
@@ -240,87 +157,96 @@ Namespace SDT.Civil
 
                 Dim bdType As Type = bdObj.GetType()
 
-                Dim candidates As New List(Of MethodInfo)()
+                ' Procura um mtodo "Add*" que receba:
+                '  - (ObjectId, Double, Enum boundaryType, Boolean)
+                ' ou variaes com 3/4/5 params.
+                Dim chosen As MethodInfo = Nothing
+                Dim chosenParams As ParameterInfo() = Nothing
 
                 For Each mi As MethodInfo In bdType.GetMethods(BindingFlags.Instance Or BindingFlags.Public Or BindingFlags.NonPublic)
-                    If mi Is Nothing OrElse mi.Name Is Nothing Then Continue For
-                    If Not String.Equals(mi.Name, "AddBoundaries", StringComparison.OrdinalIgnoreCase) Then Continue For
+                    Dim name As String = mi.Name
+                    If name Is Nothing Then Continue For
+                    If Not name.StartsWith("Add", StringComparison.OrdinalIgnoreCase) Then Continue For
 
                     Dim ps As ParameterInfo() = mi.GetParameters()
-                    If ps Is Nothing OrElse ps.Length < 4 Then Continue For
+                    If ps Is Nothing Then Continue For
+                    If ps.Length < 3 Then Continue For
 
-                    ' p0: ObjectIdCollection
-                    If ps(0).ParameterType IsNot GetType(ObjectIdCollection) Then Continue For
-                    ' p1: Double
-                    If ps(1).ParameterType IsNot GetType(Double) Then Continue For
-                    ' p2: enum (SurfaceBoundaryType ou similar)
-                    If Not ps(2).ParameterType.IsEnum Then Continue For
-                    ' p3: Boolean
-                    If ps(3).ParameterType IsNot GetType(Boolean) Then Continue For
+                    ' Primeiro param ObjectId (ou ObjectIdCollection)
+                    Dim p0 As Type = ps(0).ParameterType
+                    Dim okP0 As Boolean =
+                (p0 Is GetType(ObjectId)) OrElse (p0 Is GetType(ObjectIdCollection))
 
-                    candidates.Add(mi)
+                    If Not okP0 Then Continue For
+
+                    ' Segundo param costuma ser Double (mid-ordinate) OU algo similar
+                    Dim okP1 As Boolean = (ps.Length >= 2 AndAlso ps(1).ParameterType Is GetType(Double))
+                    If Not okP1 Then Continue For
+
+                    ' Terceiro param costuma ser enum de boundary type
+                    Dim p2 As Type = ps(2).ParameterType
+                    Dim okP2 As Boolean = p2.IsEnum
+
+                    If Not okP2 Then Continue For
+
+                    ' Achou um candidato bom
+                    chosen = mi
+                    chosenParams = ps
+                    Exit For
                 Next
 
-                If candidates.Count = 0 Then
-                    If ed IsNot Nothing Then ed.WriteMessage(Environment.NewLine & "[SDT] Não encontrei AddBoundaries compatível em BoundariesDefinition.")
+                If chosen Is Nothing Then
+                    If ed IsNot Nothing Then
+                        ed.WriteMessage(Environment.NewLine & "[SDT] No achei mtodo Add* compatvel em BoundariesDefinition: " & bdType.FullName)
+                    End If
                     Exit Sub
                 End If
 
-                ' Preferir a assinatura com 4 parâmetros; senão pega a menor (mais compatível)
-                candidates.Sort(Function(a, b) a.GetParameters().Length.CompareTo(b.GetParameters().Length))
-                Dim chosen As MethodInfo = candidates(0)
-                Dim psChosen As ParameterInfo() = chosen.GetParameters()
+                ' Monta argumentos conforme a assinatura encontrada
+                Dim args(chosenParams.Length - 1) As Object
 
-                Dim args(psChosen.Length - 1) As Object
-                args(0) = boundaryEntIds
+                ' arg0: ObjectId ou ObjectIdCollection
+                If chosenParams(0).ParameterType Is GetType(ObjectId) Then
+                    args(0) = boundaryPolylineId
+                Else
+                    Dim col As New ObjectIdCollection()
+                    col.Add(boundaryPolylineId)
+                    args(0) = col
+                End If
+
+                ' arg1: mid-ordinate
                 args(1) = midOrdinate
 
-                Dim enumType As Type = psChosen(2).ParameterType
-                Dim outerValue As Object
-                Try
-                    outerValue = [Enum].Parse(enumType, "Outer", True)
-                Catch
-                    ' fallback: tenta primeiro item
-                    outerValue = [Enum].GetValues(enumType).GetValue(0)
-                End Try
+                ' arg2: enum boundary type (Outer)
+                Dim enumType As Type = chosenParams(2).ParameterType
+                Dim outerValue As Object = [Enum].Parse(enumType, "Outer", True)
                 args(2) = outerValue
 
-                args(3) = useNonDestructiveBreakline
+                ' Demais args: tenta preencher boolean "keepEntities" quando existir
+                For i As Integer = 3 To chosenParams.Length - 1
+                    Dim pt As Type = chosenParams(i).ParameterType
 
-                ' parâmetros extras (nome/descrição/flags) -> preencher de forma segura
-                For i As Integer = 4 To psChosen.Length - 1
-                    Dim pt As Type = psChosen(i).ParameterType
-                    If pt Is GetType(String) Then
-                        args(i) = "SDT_OUTER"
-                    ElseIf pt Is GetType(Boolean) Then
-                        args(i) = False
+                    If pt Is GetType(Boolean) Then
+                        args(i) = keepEntities
                     ElseIf pt Is GetType(Double) Then
+                        ' alguns overloads repetem tolerncia etc.
                         args(i) = 0.0R
                     ElseIf pt Is GetType(Integer) Then
                         args(i) = 0
                     Else
+                        ' desconhecido -> Nothing
                         args(i) = Nothing
                     End If
                 Next
 
                 chosen.Invoke(bdObj, args)
-                TryRebuild(tin, ed, "ApplyOuterBoundary-post")
 
             Catch ex As Exception
-                If ed IsNot Nothing Then ed.WriteMessage(Environment.NewLine & "[SDT] ApplyOuterBoundary falhou: " & ex.Message)
+                If ed IsNot Nothing Then
+                    ed.WriteMessage(Environment.NewLine & "[SDT] ApplyOuterBoundary falhou: " & ex.Message)
+                End If
             End Try
 
-        End Sub
-
-        ' Compatibilidade: versão antiga com 1 entidade
-        Public Shared Sub ApplyOuterBoundary(tin As TinSurface,
-                                             boundaryPolylineId As ObjectId,
-                                             midOrdinate As Double,
-                                             keepEntities As Boolean,
-                                             ed As Editor)
-            Dim ids As New ObjectIdCollection()
-            If Not boundaryPolylineId.IsNull Then ids.Add(boundaryPolylineId)
-            ApplyOuterBoundary(tin, ids, midOrdinate, False, ed)
         End Sub
 
 
