@@ -33,7 +33,8 @@ Public Class Cmd_ListarBoundaries
             Return
         End If
 
-        Const layerOuter As String = "SDT_BOUNDARY_OUTER"
+        Const layerOuter As String = "SDT_BOUNDARY_OUTER_DATUM"
+        Const datumName As String = "DATUM"
 
         Using tr As Transaction = db.TransactionManager.StartTransaction()
 
@@ -54,6 +55,12 @@ Public Class Cmd_ListarBoundaries
                 ed.WriteMessage(Environment.NewLine & Environment.NewLine & "CORRIDOR: " & corr.Name)
 
                 For Each surf As CorridorSurface In corr.CorridorSurfaces
+
+                    ' Para facilitar a depuração com o comando de Limpeza:
+                    ' foca apenas na superfície DATUM de cada corredor.
+                    If surf Is Nothing OrElse Not surf.Name.Equals(datumName, StringComparison.OrdinalIgnoreCase) Then
+                        Continue For
+                    End If
 
                     ed.WriteMessage(Environment.NewLine & "  SURFACE: " & surf.Name)
 

@@ -2,7 +2,6 @@ Option Strict On
 Option Explicit On
 
 Imports System
-Imports Autodesk.AutoCAD.ApplicationServices
 Imports Autodesk.AutoCAD.DatabaseServices
 Imports Autodesk.AutoCAD.EditorInput
 Imports Autodesk.Civil.ApplicationServices
@@ -15,10 +14,10 @@ Namespace SDT.Civil
         End Sub
 
         ''' <summary>
-        ''' Cria uma "superfície de limpeza" a partir de uma TinSurface (TN):
-        ''' 1) copia (clone) a superfície TN para um novo nome,
+        ''' Cria uma "superfície de limpeza" a partir de uma TinSurface base (TN):
+        ''' 1) clona (cópia independente) a superfície TN para um novo nome (TinSurfaceService.CloneTinSurface),
         ''' 2) aplica deslocamento vertical (raise),
-        ''' 3) aplica boundary outer.
+        ''' 3) aplica boundary outer (Polyline) para limitar a área.
         ''' </summary>
         Public Shared Function Run(tr As Transaction,
                                   db As Database,
@@ -33,28 +32,28 @@ Namespace SDT.Civil
             If tnSurfaceId.IsNull Then Return ObjectId.Null
             If String.IsNullOrWhiteSpace(limpezaSurfaceName) Then Return ObjectId.Null
 
-            ' 1) copia TN -> nova superfície
-            Dim limpezaId As ObjectId = TinSurfaceService.CopyFromTinSurface(db, tr, civDoc, tnSurfaceId, limpezaSurfaceName, ed)
+            ' TN -> clone (independente)
+            Dim limpezaId As ObjectId = TinSurfaceService.CloneTinSurface(db, tr, civDoc, tnSurfaceId, limpezaSurfaceName, ed)
             If limpezaId.IsNull Then
-                ed.WriteMessage(Environment.NewLine & "[SDT] Falha ao copiar superfície TN para '" & limpezaSurfaceName & "'.")
+                ed.WriteMessage(Environment.NewLine & "[SDT] Falha ao clonar superfície TN para '" & limpezaSurfaceName & "'.")
                 Return ObjectId.Null
             End If
 
             Dim limpezaSurf As TinSurface = TryCast(tr.GetObject(limpezaId, OpenMode.ForWrite), TinSurface)
             If limpezaSurf Is Nothing Then Return ObjectId.Null
 
-            ' 2) deslocamento (cm -> m)
+            ' deslocamento (cm -> m)
             Dim raise As Double = espessuraCm / 100.0
             TinSurfaceService.RaiseTinSurface(limpezaSurf, raise)
 
-            ' 3) boundary outer
-            ' ...
+            ' boundary outer
             If Not outerBoundaryId.IsNull Then
-                TinSurfaceService.ApplyOuterBoundary(limpezaSurf, outerBoundaryId, 1.0, True, ed)
+                Dim ids As New ObjectIdCollection()
+                ids.Add(outerBoundaryId)
+                TinSurfaceService.ApplyOuterBoundary(limpezaSurf, ids, 0.5, True, ed)
+            Else
+                ed.WriteMessage(Environment.NewLine & $"[SDT] Aviso: '{limpezaSurfaceName}' criado sem boundary (outerBoundaryId = Null).")
             End If
-
-            ' ...
-
 
             Return limpezaId
         End Function

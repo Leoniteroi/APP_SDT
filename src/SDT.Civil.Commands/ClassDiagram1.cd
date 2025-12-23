@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyCommands">
+    <Position X="0.75" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAAAAEAQAAACAAAAAAAAAAAAAAAACAAAA=</HashCode>
+      <FileName>MyCommands.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SurfaceLimpezaCommands">
+    <Position X="10" Y="4.25" Width="2.5" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Class Name="SurfaceLimpezaCommands.TinSurfaceItem">
+        <TypeIdentifier>
+          <NewMemberFileName>SurfaceLimpezaCommands.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="SurfaceLimpezaCommands.TinSurfacePickerDialog">
+        <TypeIdentifier>
+          <NewMemberFileName>SurfaceLimpezaCommands.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AQAAAAAAAAAAEAAAAABAAAAAgAAAABAAAAAAAACAABA=</HashCode>
+      <FileName>SurfaceLimpezaCommands.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PolylineUtils">
+    <Position X="7.75" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>PolylineUtils.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="LayerUtils">
+    <Position X="4.25" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>LayerUtils.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Cmd_ListarBoundaries">
+    <Position X="6" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Cmd_ListarBoundaries.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="BoundaryGeometryUtils">
+    <Position X="2.5" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>BoundaryGeometryUtils.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="System.Object" Collapsed="true">
+    <Position X="5.75" Y="0.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
