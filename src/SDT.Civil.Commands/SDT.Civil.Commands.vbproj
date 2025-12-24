@@ -53,9 +53,9 @@
       <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\ACA\AecBaseMgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="AeccDbMgd, Version=13.6.2053.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\C3D\AeccDbMgd.dll</HintPath>
+    <Reference Include="AeccDbMgd">
+      <HintPath>$(Civil3D2024Dir)AeccDbMgd.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Autodesk.AEC.Interop.UIBase">
       <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\ACA\Autodesk.AEC.Interop.UIBase.dll</HintPath>
@@ -72,9 +72,6 @@
     <Compile Include="PolylineUtils.vb" />
     <Compile Include="BoundaryGeometryUtils.vb" />
     <Compile Include="AssemblyInfo.vb" />
-  </ItemGroup>
-  <ItemGroup>
-    <Analyzer Include="..\..\..\..\..\..\..\Program Files\Autodesk\Civil 3D 2024 Object Enabler\AeccDbMgd.dll" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />
