@@ -7,9 +7,8 @@ Imports Autodesk.AutoCAD.ApplicationServices
 Imports Autodesk.AutoCAD.DatabaseServices
 Imports Autodesk.AutoCAD.EditorInput
 Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.Civil.ApplicationServices
-Imports SDT.Core
 Imports SDT.Civil
+Imports SDT.Core
 
 ''' <summary>
 ''' Comandos SDT: criação de CorridorSurfaces (DATUM/TOP) e edição de link codes via INI.

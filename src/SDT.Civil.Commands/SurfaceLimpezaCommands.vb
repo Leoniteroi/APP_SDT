@@ -2,16 +2,14 @@ Option Strict On
 Option Explicit On
 
 Imports System
-Imports Microsoft.Win32
 Imports Autodesk.AutoCAD.ApplicationServices
 Imports Autodesk.AutoCAD.DatabaseServices
 Imports Autodesk.AutoCAD.EditorInput
 Imports Autodesk.AutoCAD.Runtime
-Imports Autodesk.AutoCAD.Windows
 Imports Autodesk.Civil.ApplicationServices
 Imports Autodesk.Civil.DatabaseServices
+Imports Microsoft.Win32
 Imports SDT.Core
-Imports SDT.Civil
 
 ' OBS: Este arquivo usa WinForms.
 ' Requisitos no projeto SDT.Civil.Commands:

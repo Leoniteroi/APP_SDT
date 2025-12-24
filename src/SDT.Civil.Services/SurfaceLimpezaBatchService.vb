@@ -97,15 +97,15 @@ Namespace SDT.Civil
                 Next
 
                 If limpezaId.IsNull Then
-                        ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao criar '{limpezaName}'.")
-                        Continue For
-                    End If
+                    ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao criar '{limpezaName}'.")
+                    Continue For
+                End If
 
-                    created += 1
-                    ed.WriteMessage(Environment.NewLine & $"[SDT] OK: '{limpezaName}' criado (TN + boundary '{datumSurf.Name}').")
-                Next
+                created += 1
+                ed.WriteMessage(Environment.NewLine & $"[SDT] OK: '{limpezaName}' criado (TN + boundary '{datumSurf.Name}').")
+            Next
 
-                Return created
+            Return created
         End Function
 
         Private Shared Function FindCorridorSurfaceBySuffix(corr As Corridor, suffix As String) As CorridorSurface

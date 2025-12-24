@@ -1,8 +1,8 @@
 Option Strict On
 Option Explicit On
 
-Imports Autodesk.AutoCAD.EditorInput
 Imports System
+Imports Autodesk.AutoCAD.EditorInput
 
 Namespace SDT.Core
 

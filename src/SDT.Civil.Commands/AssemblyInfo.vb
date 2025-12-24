@@ -1,7 +1,6 @@
-Imports Autodesk.AutoCAD.Runtime
-Imports System
 Imports System.Reflection
 Imports System.Runtime.InteropServices
+Imports Autodesk.AutoCAD.Runtime
 
 <Assembly: AssemblyTitle("SDT.Civil.Commands")>
 <Assembly: AssemblyDescription("SDT toolkit for Civil 3D 2024")>

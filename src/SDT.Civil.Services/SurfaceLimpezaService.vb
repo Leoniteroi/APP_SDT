@@ -2,6 +2,7 @@ Option Strict On
 Option Explicit On
 
 Imports System
+Imports System.Reflection
 Imports Autodesk.AutoCAD.DatabaseServices
 Imports Autodesk.AutoCAD.EditorInput
 Imports Autodesk.Civil.ApplicationServices
@@ -46,17 +47,98 @@ Namespace SDT.Civil
             Dim raise As Double = espessuraCm / 100.0
             TinSurfaceService.RaiseTinSurface(limpezaSurf, raise)
 
-            ' boundary outer
+            ' boundary outer (compatível com diferentes assinaturas do TinSurfaceService.ApplyOuterBoundary)
             If Not outerBoundaryId.IsNull Then
-                Dim ids As New ObjectIdCollection()
-                ids.Add(outerBoundaryId)
-                TinSurfaceService.ApplyOuterBoundary(limpezaSurf, ids, 0.5, True, ed)
+                ApplyOuterBoundaryCompat(limpezaSurf, outerBoundaryId, 1.0, False, ed)
             Else
-                ed.WriteMessage(Environment.NewLine & $"[SDT] Aviso: '{limpezaSurfaceName}' criado sem boundary (outerBoundaryId = Null).")
+                ed.WriteMessage(Environment.NewLine & "[SDT] Aviso: '" & limpezaSurfaceName & "' criado sem boundary (outerBoundaryId = Null).")
             End If
 
             Return limpezaId
         End Function
+
+        ''' <summary>
+        ''' Chama TinSurfaceService.ApplyOuterBoundary aceitando:
+        ''' - (TinSurface, ObjectId, Double, Boolean, Editor) OU
+        ''' - (TinSurface, ObjectIdCollection, Double, Boolean, Editor)
+        ''' Usando reflection para evitar erro de compilação por overload diferente entre projetos.
+        ''' </summary>
+        Private Shared Sub ApplyOuterBoundaryCompat(tin As TinSurface,
+                                                   boundaryId As ObjectId,
+                                                   midOrdinate As Double,
+                                                   useNonDestructiveBreakline As Boolean,
+                                                   ed As Editor)
+
+            If tin Is Nothing OrElse boundaryId.IsNull Then Exit Sub
+            If midOrdinate <= 0 Then midOrdinate = 1.0
+
+            Try
+                Dim tSvc As Type = GetType(TinSurfaceService)
+
+                ' 1) Preferir overload com ObjectId (se existir)
+                Dim miId As MethodInfo = tSvc.GetMethod(
+                    "ApplyOuterBoundary",
+                    BindingFlags.Public Or BindingFlags.Static,
+                    Nothing,
+                    New Type() {GetType(TinSurface), GetType(ObjectId), GetType(Double), GetType(Boolean), GetType(Editor)},
+                    Nothing)
+
+                If miId IsNot Nothing Then
+                    miId.Invoke(Nothing, New Object() {tin, boundaryId, midOrdinate, useNonDestructiveBreakline, ed})
+                    Exit Sub
+                End If
+
+                ' 2) Fallback: overload com ObjectIdCollection (se existir)
+                Dim miCol As MethodInfo = tSvc.GetMethod(
+                    "ApplyOuterBoundary",
+                    BindingFlags.Public Or BindingFlags.Static,
+                    Nothing,
+                    New Type() {GetType(TinSurface), GetType(ObjectIdCollection), GetType(Double), GetType(Boolean), GetType(Editor)},
+                    Nothing)
+
+                If miCol IsNot Nothing Then
+                    Dim ids As New ObjectIdCollection()
+                    ids.Add(boundaryId)
+                    miCol.Invoke(Nothing, New Object() {tin, ids, midOrdinate, useNonDestructiveBreakline, ed})
+                    Exit Sub
+                End If
+
+                ' 3) Último fallback: procurar qualquer ApplyOuterBoundary com 5 params e tentar montar args
+                For Each mi As MethodInfo In tSvc.GetMethods(BindingFlags.Public Or BindingFlags.Static)
+                    If mi Is Nothing OrElse mi.Name Is Nothing Then Continue For
+                    If Not String.Equals(mi.Name, "ApplyOuterBoundary", StringComparison.OrdinalIgnoreCase) Then Continue For
+
+                    Dim ps As ParameterInfo() = mi.GetParameters()
+                    If ps Is Nothing OrElse ps.Length <> 5 Then Continue For
+                    If ps(0).ParameterType IsNot GetType(TinSurface) Then Continue For
+
+                    Dim args(4) As Object
+                    args(0) = tin
+
+                    If ps(1).ParameterType Is GetType(ObjectId) Then
+                        args(1) = boundaryId
+                    ElseIf ps(1).ParameterType Is GetType(ObjectIdCollection) Then
+                        Dim ids As New ObjectIdCollection()
+                        ids.Add(boundaryId)
+                        args(1) = ids
+                    Else
+                        Continue For
+                    End If
+
+                    args(2) = midOrdinate
+                    args(3) = useNonDestructiveBreakline
+                    args(4) = ed
+
+                    mi.Invoke(Nothing, args)
+                    Exit Sub
+                Next
+
+                If ed IsNot Nothing Then ed.WriteMessage(Environment.NewLine & "[SDT] ApplyOuterBoundaryCompat: overload não encontrado em TinSurfaceService.")
+            Catch ex As Exception
+                If ed IsNot Nothing Then ed.WriteMessage(Environment.NewLine & "[SDT] ApplyOuterBoundaryCompat falhou: " & ex.Message)
+            End Try
+
+        End Sub
 
     End Class
 
