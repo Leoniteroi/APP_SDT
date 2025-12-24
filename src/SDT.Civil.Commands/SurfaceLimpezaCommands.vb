@@ -10,6 +10,8 @@ Imports Autodesk.Civil.ApplicationServices
 Imports Autodesk.Civil.DatabaseServices
 Imports Microsoft.Win32
 Imports SDT.Core
+Imports Registry = Autodesk.AutoCAD.Runtime.Registry
+Imports RegistryKey = Autodesk.AutoCAD.Runtime.RegistryKey
 
 ' OBS: Este arquivo usa WinForms.
 ' Requisitos no projeto SDT.Civil.Commands:
@@ -18,9 +20,6 @@ Imports SDT.Core
 ' Se o .vbproj for SDK-style: incluir <UseWindowsForms>true</UseWindowsForms>
 
 Public Class SurfaceLimpezaCommands
-
-    Private Const REG_PATH As String = "Software\SDT\Civil\SurfaceLimpeza"
-    Private Const REG_LAST_TN_NAME As String = "LastTinSurfaceName"
 
     <CommandMethod("SDT_CRIAR_SUPERFICIES_LIMPEZA", CommandFlags.Modal)>
     Public Sub SDT_CRIAR_SUPERFICIES_LIMPEZA()
@@ -68,43 +67,61 @@ Public Class SurfaceLimpezaCommands
         Return pdr.Value
     End Function
 
-    ' =========================
-    ' Registry (lembrar última)
-    ' =========================
-    Private Function ReadLastTinSurfaceName() As String
-        Try
-            Using k As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(REG_PATH, False)
-                If k Is Nothing Then Return ""
-                Dim v As Object = k.GetValue(REG_LAST_TN_NAME, "")
-                Return If(v Is Nothing, "", Convert.ToString(v))
-            End Using
-        Catch
-            Return ""
-        End Try
-    End Function
-
-    Private Sub SaveLastTinSurfaceName(name As String)
-        If String.IsNullOrWhiteSpace(name) Then Exit Sub
-        Try
-            Using k As Microsoft.Win32.RegistryKey = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(REG_PATH)
-                k.SetValue(REG_LAST_TN_NAME, name.Trim(), RegistryValueKind.String)
-            End Using
-        Catch
-        End Try
-    End Sub
-
     ' ==========================================
     ' Caixa de seleção: lista de TinSurfaces (TN)
     ' - Mostra tipo [TIN] no combo
     ' - Filtra apenas TinSurface
     ' - Lembra a última seleção por nome (Registry)
+    ' Refatorado: delega coleta de itens e gerenciamento de Registry ao TinSurfacePicker
     ' ==========================================
     Private Function PromptSelectTinSurfaceWithDialog(tr As Transaction, civDoc As CivilDocument, ed As Editor) As ObjectId
         If tr Is Nothing OrElse civDoc Is Nothing Then Return ObjectId.Null
 
-        Dim lastName As String = ReadLastTinSurfaceName()
+        Dim lastName As String = TinSurfacePicker.ReadLastTinSurfaceName()
 
+        Dim items As System.Collections.Generic.List(Of TinSurfaceItem) =
+            TinSurfacePicker.GetTinSurfaceItems(tr, civDoc)
+
+        If items.Count = 0 Then
+            If ed IsNot Nothing Then ed.WriteMessage(Environment.NewLine & "[SDT] Nenhuma TinSurface encontrada no desenho.")
+            Return ObjectId.Null
+        End If
+
+        ' Ordenar por nome sem LINQ (para evitar depender de Option Infer)
+        items.Sort(Function(a As TinSurfaceItem, b As TinSurfaceItem) _
+                   String.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase))
+
+        Using dlg As New TinSurfacePickerDialog(items, lastName)
+            Dim res As System.Windows.Forms.DialogResult = Application.ShowModalDialog(dlg)
+            If res <> System.Windows.Forms.DialogResult.OK Then Return ObjectId.Null
+
+            If dlg.SelectedItem IsNot Nothing Then
+                TinSurfacePicker.SaveLastTinSurfaceName(dlg.SelectedItem.Name)
+            End If
+
+            Return dlg.SelectedId
+        End Using
+    End Function
+
+End Class
+
+' ----------------------------------------------------
+' Modelo de item e utilitário para seleção (testável)
+' - Mantém leitura/gravação de Registry e construção da lista
+' - UI permanece no dialog, separado
+' ----------------------------------------------------
+Friend NotInheritable Class TinSurfacePicker
+
+    Private Sub New()
+    End Sub
+
+    Private Const REG_PATH As String = "Software\SDT\Civil\SurfaceLimpeza"
+    Private Const REG_LAST_TN_NAME As String = "LastTinSurfaceName"
+
+    Public Shared Function GetTinSurfaceItems(tr As Transaction, civDoc As CivilDocument) As System.Collections.Generic.List(Of TinSurfaceItem)
         Dim items As New System.Collections.Generic.List(Of TinSurfaceItem)()
+
+        If tr Is Nothing OrElse civDoc Is Nothing Then Return items
 
         For Each id As ObjectId In civDoc.GetSurfaceIds()
             If id.IsNull Then Continue For
@@ -122,167 +139,174 @@ Public Class SurfaceLimpezaCommands
             items.Add(New TinSurfaceItem(nm, "TIN", id))
         Next
 
-        If items.Count = 0 Then
-            If ed IsNot Nothing Then ed.WriteMessage(Environment.NewLine & "[SDT] Nenhuma TinSurface encontrada no desenho.")
-            Return ObjectId.Null
-        End If
-
-        ' Ordenar por nome sem LINQ (para evitar depender de Option Infer)
-        items.Sort(Function(a As TinSurfaceItem, b As TinSurfaceItem) _
-                   String.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase))
-
-        Using dlg As New TinSurfacePickerDialog(items, lastName)
-            Dim res As System.Windows.Forms.DialogResult = Application.ShowModalDialog(dlg)
-            If res <> System.Windows.Forms.DialogResult.OK Then Return ObjectId.Null
-
-            If dlg.SelectedItem IsNot Nothing Then
-                SaveLastTinSurfaceName(dlg.SelectedItem.Name)
-            End If
-
-            Return dlg.SelectedId
-        End Using
+        Return items
     End Function
 
-    Private Class TinSurfaceItem
-        Public ReadOnly Property Name As String
-        Public ReadOnly Property TypeLabel As String
-        Public ReadOnly Property Id As ObjectId
+    Public Shared Function ReadLastTinSurfaceName() As String
+        Try
+            Using k As RegistryKey = Registry.CurrentUser.OpenSubKey(REG_PATH, False)
+                If k Is Nothing Then Return ""
+                Dim v As Object = k.GetValue(REG_LAST_TN_NAME, "")
+                Return If(v Is Nothing, "", Convert.ToString(v))
+            End Using
+        Catch
+            Return ""
+        End Try
+    End Function
 
-        Public Sub New(name As String, typeLabel As String, id As ObjectId)
-            Me.Name = name
-            Me.TypeLabel = typeLabel
-            Me.Id = id
-        End Sub
+    Public Shared Sub SaveLastTinSurfaceName(name As String)
+        If String.IsNullOrWhiteSpace(name) Then Exit Sub
+        Try
+            Using k As RegistryKey = Registry.CurrentUser.CreateSubKey(REG_PATH)
+                k.SetValue(REG_LAST_TN_NAME, name.Trim(), RegistryValueKind.String)
+            End Using
+        Catch
+            ' swallow - não crítico
+        End Try
+    End Sub
 
-        Public ReadOnly Property DisplayText As String
-            Get
-                Return Me.Name & " [" & Me.TypeLabel & "]"
-            End Get
-        End Property
+End Class
 
-        Public Overrides Function ToString() As String
-            Return DisplayText
-        End Function
-    End Class
+' Item reutilizável (facilita testes unitários)
+Friend Class TinSurfaceItem
+    Public ReadOnly Property Name As String
+    Public ReadOnly Property TypeLabel As String
+    Public ReadOnly Property Id As ObjectId
 
-    Private Class TinSurfacePickerDialog
-        Inherits System.Windows.Forms.Form
+    Public Sub New(name As String, typeLabel As String, id As ObjectId)
+        Me.Name = name
+        Me.TypeLabel = typeLabel
+        Me.Id = id
+    End Sub
 
-        Private ReadOnly _all As System.Collections.Generic.List(Of TinSurfaceItem)
-        Private ReadOnly _txt As System.Windows.Forms.TextBox
-        Private ReadOnly _cmb As System.Windows.Forms.ComboBox
-        Private ReadOnly _ok As System.Windows.Forms.Button
-        Private ReadOnly _cancel As System.Windows.Forms.Button
-        Private ReadOnly _lastName As String
+    Public ReadOnly Property DisplayText As String
+        Get
+            Return Me.Name & " [" & Me.TypeLabel & "]"
+        End Get
+    End Property
 
-        Public Property SelectedId As ObjectId = ObjectId.Null
-        Public Property SelectedItem As TinSurfaceItem = Nothing
+    Public Overrides Function ToString() As String
+        Return DisplayText
+    End Function
+End Class
 
-        Public Sub New(items As System.Collections.Generic.List(Of TinSurfaceItem), lastName As String)
-            _all = items
-            _lastName = If(lastName, "").Trim()
+' UI: Dialog separado (permanece in-file para simplicidade)
+Friend Class TinSurfacePickerDialog
+    Inherits System.Windows.Forms.Form
 
-            Me.Text = "Selecionar superfície TIN (TN)"
-            Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
-            Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
-            Me.MinimizeBox = False
-            Me.MaximizeBox = False
-            Me.ShowInTaskbar = False
-            Me.Width = 560
-            Me.Height = 190
+    Private ReadOnly _all As System.Collections.Generic.List(Of TinSurfaceItem)
+    Private ReadOnly _txt As System.Windows.Forms.TextBox
+    Private ReadOnly _cmb As System.Windows.Forms.ComboBox
+    Private ReadOnly _ok As System.Windows.Forms.Button
+    Private ReadOnly _cancel As System.Windows.Forms.Button
+    Private ReadOnly _lastName As String
 
-            Dim lbl As New System.Windows.Forms.Label()
-            lbl.Left = 12 : lbl.Top = 12 : lbl.Width = 520
-            lbl.Text = "Filtrar (opcional) e selecione a TinSurface do Terreno Natural:"
+    Public Property SelectedId As ObjectId = ObjectId.Null
+    Public Property SelectedItem As TinSurfaceItem = Nothing
 
-            _txt = New System.Windows.Forms.TextBox()
-            _txt.Left = 12 : _txt.Top = 35 : _txt.Width = 520
-            AddHandler _txt.TextChanged, AddressOf OnFilterChanged
+    Public Sub New(items As System.Collections.Generic.List(Of TinSurfaceItem), lastName As String)
+        _all = items
+        _lastName = If(lastName, "").Trim()
 
-            _cmb = New System.Windows.Forms.ComboBox()
-            _cmb.Left = 12 : _cmb.Top = 65 : _cmb.Width = 520
-            _cmb.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
+        Me.Text = "Selecionar superfície TIN (TN)"
+        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen
+        Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
+        Me.MinimizeBox = False
+        Me.MaximizeBox = False
+        Me.ShowInTaskbar = False
+        Me.Width = 560
+        Me.Height = 190
 
-            _ok = New System.Windows.Forms.Button()
-            _ok.Left = 356 : _ok.Top = 110 : _ok.Width = 85
-            _ok.Text = "OK"
+        Dim lbl As New System.Windows.Forms.Label()
+        lbl.Left = 12 : lbl.Top = 12 : lbl.Width = 520
+        lbl.Text = "Filtrar (opcional) e selecione a TinSurface do Terreno Natural:"
 
-            _cancel = New System.Windows.Forms.Button()
-            _cancel.Left = 447 : _cancel.Top = 110 : _cancel.Width = 85
-            _cancel.Text = "Cancelar"
+        _txt = New System.Windows.Forms.TextBox()
+        _txt.Left = 12 : _txt.Top = 35 : _txt.Width = 520
+        AddHandler _txt.TextChanged, AddressOf OnFilterChanged
 
-            Me.AcceptButton = _ok
-            Me.CancelButton = _cancel
+        _cmb = New System.Windows.Forms.ComboBox()
+        _cmb.Left = 12 : _cmb.Top = 65 : _cmb.Width = 520
+        _cmb.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList
 
-            AddHandler _ok.Click, AddressOf OnOk
-            AddHandler _cancel.Click, Sub() Me.DialogResult = System.Windows.Forms.DialogResult.Cancel
+        _ok = New System.Windows.Forms.Button()
+        _ok.Left = 356 : _ok.Top = 110 : _ok.Width = 85
+        _ok.Text = "OK"
 
-            Me.Controls.Add(lbl)
-            Me.Controls.Add(_txt)
-            Me.Controls.Add(_cmb)
-            Me.Controls.Add(_ok)
-            Me.Controls.Add(_cancel)
+        _cancel = New System.Windows.Forms.Button()
+        _cancel.Left = 447 : _cancel.Top = 110 : _cancel.Width = 85
+        _cancel.Text = "Cancelar"
 
+        Me.AcceptButton = _ok
+        Me.CancelButton = _cancel
+
+        AddHandler _ok.Click, AddressOf OnOk
+        AddHandler _cancel.Click, Sub() Me.DialogResult = System.Windows.Forms.DialogResult.Cancel
+
+        Me.Controls.Add(lbl)
+        Me.Controls.Add(_txt)
+        Me.Controls.Add(_cmb)
+        Me.Controls.Add(_ok)
+        Me.Controls.Add(_cancel)
+
+        LoadCombo(_all)
+
+        If _lastName.Length > 0 Then
+            Dim idx As Integer = FindIndexByName(_lastName)
+            If idx >= 0 Then _cmb.SelectedIndex = idx
+        End If
+    End Sub
+
+    Private Function FindIndexByName(name As String) As Integer
+        For i As Integer = 0 To _cmb.Items.Count - 1
+            Dim it As TinSurfaceItem = TryCast(_cmb.Items(i), TinSurfaceItem)
+            If it IsNot Nothing AndAlso String.Equals(it.Name, name, StringComparison.OrdinalIgnoreCase) Then
+                Return i
+            End If
+        Next
+        Return -1
+    End Function
+
+    Private Sub LoadCombo(list As System.Collections.Generic.List(Of TinSurfaceItem))
+        _cmb.BeginUpdate()
+        _cmb.Items.Clear()
+        For Each it As TinSurfaceItem In list
+            _cmb.Items.Add(it)
+        Next
+        _cmb.EndUpdate()
+        If _cmb.Items.Count > 0 Then _cmb.SelectedIndex = 0
+    End Sub
+
+    Private Sub OnFilterChanged(sender As Object, e As EventArgs)
+        Dim q As String = If(_txt.Text, "").Trim()
+
+        If q.Length = 0 Then
             LoadCombo(_all)
+            Return
+        End If
 
-            If _lastName.Length > 0 Then
-                Dim idx As Integer = FindIndexByName(_lastName)
-                If idx >= 0 Then _cmb.SelectedIndex = idx
+        Dim filtered As New System.Collections.Generic.List(Of TinSurfaceItem)()
+        For Each it As TinSurfaceItem In _all
+            If it.DisplayText.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 Then
+                filtered.Add(it)
             End If
-        End Sub
+        Next
 
-        Private Function FindIndexByName(name As String) As Integer
-            For i As Integer = 0 To _cmb.Items.Count - 1
-                Dim it As TinSurfaceItem = TryCast(_cmb.Items(i), TinSurfaceItem)
-                If it IsNot Nothing AndAlso String.Equals(it.Name, name, StringComparison.OrdinalIgnoreCase) Then
-                    Return i
-                End If
-            Next
-            Return -1
-        End Function
+        LoadCombo(filtered)
+    End Sub
 
-        Private Sub LoadCombo(list As System.Collections.Generic.List(Of TinSurfaceItem))
-            _cmb.BeginUpdate()
-            _cmb.Items.Clear()
-            For Each it As TinSurfaceItem In list
-                _cmb.Items.Add(it)
-            Next
-            _cmb.EndUpdate()
-            If _cmb.Items.Count > 0 Then _cmb.SelectedIndex = 0
-        End Sub
+    Private Sub OnOk(sender As Object, e As EventArgs)
+        Dim it As TinSurfaceItem = TryCast(_cmb.SelectedItem, TinSurfaceItem)
+        If it Is Nothing Then
+            System.Windows.Forms.MessageBox.Show(Me, "Selecione uma superfície.", "SDT",
+                                                System.Windows.Forms.MessageBoxButtons.OK,
+                                                System.Windows.Forms.MessageBoxIcon.Information)
+            Return
+        End If
 
-        Private Sub OnFilterChanged(sender As Object, e As EventArgs)
-            Dim q As String = If(_txt.Text, "").Trim()
-
-            If q.Length = 0 Then
-                LoadCombo(_all)
-                Return
-            End If
-
-            Dim filtered As New System.Collections.Generic.List(Of TinSurfaceItem)()
-            For Each it As TinSurfaceItem In _all
-                If it.DisplayText.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 Then
-                    filtered.Add(it)
-                End If
-            Next
-
-            LoadCombo(filtered)
-        End Sub
-
-        Private Sub OnOk(sender As Object, e As EventArgs)
-            Dim it As TinSurfaceItem = TryCast(_cmb.SelectedItem, TinSurfaceItem)
-            If it Is Nothing Then
-                System.Windows.Forms.MessageBox.Show(Me, "Selecione uma superfície.", "SDT",
-                                                    System.Windows.Forms.MessageBoxButtons.OK,
-                                                    System.Windows.Forms.MessageBoxIcon.Information)
-                Return
-            End If
-
-            SelectedItem = it
-            SelectedId = it.Id
-            Me.DialogResult = System.Windows.Forms.DialogResult.OK
-        End Sub
-
-    End Class
+        SelectedItem = it
+        SelectedId = it.Id
+        Me.DialogResult = System.Windows.Forms.DialogResult.OK
+    End Sub
 
 End Class

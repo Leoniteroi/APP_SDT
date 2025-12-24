@@ -99,21 +99,6 @@ Namespace SDT.Civil
             Return newId
         End Function
 
-        ''' <summary>
-        ''' Compatibilidade: mantenha chamadas antigas.
-        ''' Use <see cref="CloneTinSurface"/> no lugar.
-        ''' </summary>
-        <Obsolete("Use CloneTinSurface no lugar de CopyFromTinSurface (evita PasteSurface e dependências).")>
-        Public Shared Function CopyFromTinSurface(db As Database,
-                                          tr As Transaction,
-                                          civDoc As CivilDocument,
-                                          sourceTinId As ObjectId,
-                                          newName As String,
-                                          ed As Editor) As ObjectId
-            Return CloneTinSurface(db, tr, civDoc, sourceTinId, newName, ed)
-        End Function
-
-
         Public Shared Sub RaiseTinSurface(tin As TinSurface, raise As Double)
             If tin Is Nothing Then Exit Sub
             If Math.Abs(raise) < 0.0000001 Then Exit Sub

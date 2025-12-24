@@ -21,13 +21,6 @@ Public Class MyCommands
     <CommandMethod("SDT_CRIAR_SUPERFICIE_DATUM", CommandFlags.Modal)>
     Public Sub CriarDatum()
 
-        Dim ctx As AcadContext = Nothing
-        Dim err As String = Nothing
-
-        If Not AcadContext.TryCreate(ctx, err) Then
-            Return
-        End If
-
         Dim spec As New CorridorSurfaceBuilderService.SurfaceSpec With {
             .Suffix = "_DATUM",
             .IniFile = "SDT_DatumSurfaces.ini",
@@ -35,13 +28,7 @@ Public Class MyCommands
             .OverhangMode = "BottomLinks"
         }
 
-        TransactionRunner.RunWrite(
-            ctx.Db,
-            Sub(tr As Transaction)
-                CorridorSurfaceBuilderService.BuildAll(tr, ctx.CivDoc, ctx.Ed, spec)
-            End Sub)
-
-        ctx.Ed.WriteMessage(Environment.NewLine & "[SDT] DATUM concluído.")
+        CriarSurface(spec, "[SDT] DATUM concluído.")
     End Sub
 
     <CommandMethod("SDT_EDITAR_CODES_DATUM", CommandFlags.Modal)>
@@ -56,13 +43,6 @@ Public Class MyCommands
     <CommandMethod("SDT_CRIAR_SUPERFICIE_TOP", CommandFlags.Modal)>
     Public Sub CriarTop()
 
-        Dim ctx As AcadContext = Nothing
-        Dim err As String = Nothing
-
-        If Not AcadContext.TryCreate(ctx, err) Then
-            Return
-        End If
-
         Dim spec As New CorridorSurfaceBuilderService.SurfaceSpec With {
             .Suffix = "_TOP",
             .IniFile = "SDT_TopSurfaces.ini",
@@ -70,18 +50,34 @@ Public Class MyCommands
             .OverhangMode = "TopLinks"
         }
 
+        CriarSurface(spec, "[SDT] TOP concluído.")
+    End Sub
+
+    <CommandMethod("SDT_EDITAR_CODES_TOP", CommandFlags.Modal)>
+    Public Sub EditarCodesTop()
+        EditarCodesIni("SDT_TopSurfaces.ini", New String() {"Top", "TOP"}, "TOP")
+    End Sub
+
+#End Region
+
+#Region "Common"
+
+    Private Sub CriarSurface(spec As CorridorSurfaceBuilderService.SurfaceSpec, finishedMessage As String)
+
+        Dim ctx As AcadContext = Nothing
+        Dim err As String = Nothing
+
+        If Not AcadContext.TryCreate(ctx, err) Then
+            Return
+        End If
+
         TransactionRunner.RunWrite(
             ctx.Db,
             Sub(tr As Transaction)
                 CorridorSurfaceBuilderService.BuildAll(tr, ctx.CivDoc, ctx.Ed, spec)
             End Sub)
 
-        ctx.Ed.WriteMessage(Environment.NewLine & "[SDT] TOP concluído.")
-    End Sub
-
-    <CommandMethod("SDT_EDITAR_CODES_TOP", CommandFlags.Modal)>
-    Public Sub EditarCodesTop()
-        EditarCodesIni("SDT_TopSurfaces.ini", New String() {"Top", "TOP"}, "TOP")
+        ctx.Ed.WriteMessage(Environment.NewLine & finishedMessage)
     End Sub
 
 #End Region
