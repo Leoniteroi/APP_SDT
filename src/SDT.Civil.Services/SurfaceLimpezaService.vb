@@ -49,7 +49,7 @@ Namespace SDT.Civil
 
             ' boundary outer (compatível com diferentes assinaturas do TinSurfaceService.ApplyOuterBoundary)
             If Not outerBoundaryId.IsNull Then
-                ApplyOuterBoundaryCompat(limpezaSurf, outerBoundaryId, 1.0, False, ed)
+                ApplyOuterBoundaryCompat(limpezaSurf, outerBoundaryId, .5, True, ed)
             Else
                 ed.WriteMessage(Environment.NewLine & "[SDT] Aviso: '" & limpezaSurfaceName & "' criado sem boundary (outerBoundaryId = Null).")
             End If
@@ -75,18 +75,6 @@ Namespace SDT.Civil
             Try
                 Dim tSvc As Type = GetType(TinSurfaceService)
 
-                ' 1) Preferir overload com ObjectId (se existir)
-                Dim miId As MethodInfo = tSvc.GetMethod(
-                    "ApplyOuterBoundary",
-                    BindingFlags.Public Or BindingFlags.Static,
-                    Nothing,
-                    New Type() {GetType(TinSurface), GetType(ObjectId), GetType(Double), GetType(Boolean), GetType(Editor)},
-                    Nothing)
-
-                If miId IsNot Nothing Then
-                    miId.Invoke(Nothing, New Object() {tin, boundaryId, midOrdinate, useNonDestructiveBreakline, ed})
-                    Exit Sub
-                End If
 
                 ' 2) Fallback: overload com ObjectIdCollection (se existir)
                 Dim miCol As MethodInfo = tSvc.GetMethod(
