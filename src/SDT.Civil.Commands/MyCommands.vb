@@ -74,7 +74,7 @@ Public Class MyCommands
         TransactionRunner.RunWrite(
             ctx.Db,
             Sub(tr As Transaction)
-                CorridorSurfaceBuilderService.BuildAll(tr, ctx.CivDoc, ctx.Ed, spec)
+                CorridorSurfaceBuilderService.BuildAll(tr, ctx.CivDoc, ctx.Ed, spec, False)
             End Sub)
 
         ctx.Ed.WriteMessage(Environment.NewLine & finishedMessage)

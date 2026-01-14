@@ -104,7 +104,7 @@ Namespace SDT.Civil
             If Math.Abs(raise) < 0.0000001 Then Exit Sub
 
             Try
-                tin.RaiseSurface(raise)
+                tin.RaiseSurface(-raise)
                 Exit Sub
             Catch
             End Try

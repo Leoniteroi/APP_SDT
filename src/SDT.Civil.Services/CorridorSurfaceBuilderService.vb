@@ -22,10 +22,25 @@ Namespace SDT.Civil
         Private Sub New()
         End Sub
 
+
+
+        Private Shared Function TryGetCorridorSurface(corr As Corridor, surfaceName As String) As CorridorSurface
+            Try
+                For Each cs As CorridorSurface In corr.CorridorSurfaces
+                    If cs IsNot Nothing AndAlso cs.Name.Equals(surfaceName) Then
+                        Return cs
+                    End If
+                Next
+            Catch
+            End Try
+            Return Nothing
+        End Function
+
         Public Shared Sub BuildAll(tr As Transaction,
                                    civDoc As CivilDocument,
                                    ed As Editor,
-                                   spec As SurfaceSpec)
+                                   spec As SurfaceSpec,
+                                   Optional recreateSurface As Boolean = True)
 
             Dim codes As List(Of String) = IniCodesRepository.LoadDefaultCodes(spec.IniFile, spec.DefaultCodes)
 
@@ -35,18 +50,35 @@ Namespace SDT.Civil
 
                 Dim surfName As String = corr.Name & spec.Suffix
 
-                RemoveCorridorSurfaceIfExists(corr, surfName)
 
-                Dim corSurf As CorridorSurface = Nothing
-                Try
-                    corSurf = corr.CorridorSurfaces.Add(surfName)
-                Catch ex As Exception
-                    ed.WriteMessage(Environment.NewLine & "[SDT] Falha criando CorridorSurface '" & surfName & "': " & ex.Message)
-                    Continue For
-                End Try
+                'Tenta pegar a surface existente
+                Dim corSurf As CorridorSurface = TryGetCorridorSurface(corr, surfName)
+
+                If corSurf IsNot Nothing Then
+                    If recreateSurface Then
+                        'Remove e recria (comportamento atual)
+                        RemoveCorridorSurfaceIfExists(corr, surfName)
+                        'corSurf = Nothing
+                        Try
+                            corSurf = corr.CorridorSurfaces.Add(surfName)
+                        Catch ex As Exception
+                            ed.WriteMessage(Environment.NewLine & "[SDT] Falha criando CorridorSurface '" & surfName & "': " & ex.Message)
+                            Continue For
+                        End Try
+                    Else
+                        'NÃO deleta: só atualiza os codes e segue para o próximo corredor
+                        'UpdateLinkCodes(corSurf, codes, ed)
+
+                        'Opcional: aplicar overhang mesmo sem recriar
+                        If Not String.IsNullOrWhiteSpace(spec.OverhangMode) Then
+                            OverhangCorrector.TryApply(corSurf, spec.OverhangMode, ed)
+                        End If
+
+                        'Continue For
+                    End If
+                End If
 
                 AddLinkCodes(corSurf, codes, ed)
-
 
                 Try
                     corSurf.Boundaries.AddCorridorExtentsBoundary(surfName & "_OUTER")
