@@ -61,6 +61,17 @@ Public Class MyCommands
 #End Region
 
 #Region "Common"
+    Public Shared ForceRecreateSurface As Boolean = False
+
+    <CommandMethod("SDT_COR_SURF_MODE")>
+    Public Shared Sub SetSurfaceMode()
+        ForceRecreateSurface = Not ForceRecreateSurface
+        Application.DocumentManager.MdiActiveDocument.Editor.
+        WriteMessage(Environment.NewLine &
+        "Modo recriação de superfície: " &
+        If(ForceRecreateSurface, "ATIVADO", "DESATIVADO"))
+    End Sub
+
 
     Private Sub CriarSurface(spec As CorridorSurfaceBuilderService.SurfaceSpec, finishedMessage As String)
 
@@ -74,7 +85,7 @@ Public Class MyCommands
         TransactionRunner.RunWrite(
             ctx.Db,
             Sub(tr As Transaction)
-                CorridorSurfaceBuilderService.BuildAll(tr, ctx.CivDoc, ctx.Ed, spec, False)
+                CorridorSurfaceBuilderService.BuildAll(tr, ctx.CivDoc, ctx.Ed, spec, ForceRecreateSurface)
             End Sub)
 
         ctx.Ed.WriteMessage(Environment.NewLine & finishedMessage)

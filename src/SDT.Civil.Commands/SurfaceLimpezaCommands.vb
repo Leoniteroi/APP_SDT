@@ -20,7 +20,6 @@ Imports RegistryKey = Autodesk.AutoCAD.Runtime.RegistryKey
 ' Se o .vbproj for SDK-style: incluir <UseWindowsForms>true</UseWindowsForms>
 
 Public Class SurfaceLimpezaCommands
-
     <CommandMethod("SDT_CRIAR_SUPERFICIES_LIMPEZA", CommandFlags.Modal)>
     Public Sub SDT_CRIAR_SUPERFICIES_LIMPEZA()
 

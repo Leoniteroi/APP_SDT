@@ -45,7 +45,7 @@ Namespace SDT.Civil
             Dim codes As List(Of String) = IniCodesRepository.LoadDefaultCodes(spec.IniFile, spec.DefaultCodes)
 
             For Each corrId As ObjectId In civDoc.CorridorCollection
-                Dim corr As Corridor = TryCast(tr.GetObject(corrId, OpenMode.ForRead), Corridor)
+                Dim corr As Corridor = TryCast(tr.GetObject(corrId, OpenMode.ForWrite), Corridor)
                 If corr Is Nothing Then Continue For
 
                 Dim surfName As String = corr.Name & spec.Suffix
@@ -76,6 +76,13 @@ Namespace SDT.Civil
 
                         'Continue For
                     End If
+                Else
+                    Try
+                        corSurf = corr.CorridorSurfaces.Add(surfName)
+                    Catch ex As Exception
+                        ed.WriteMessage(Environment.NewLine & "[SDT] Falha criando CorridorSurface '" & surfName & "': " & ex.Message)
+                        Continue For
+                    End Try
                 End If
 
                 AddLinkCodes(corSurf, codes, ed)
@@ -88,8 +95,11 @@ Namespace SDT.Civil
                 If Not String.IsNullOrWhiteSpace(spec.OverhangMode) Then
                     OverhangCorrector.TryApply(corSurf, spec.OverhangMode, ed)
                 End If
+
+                corr.Rebuild()
             Next
         End Sub
+
 
         Private Shared Sub RemoveCorridorSurfaceIfExists(corr As Corridor, surfaceName As String)
             Try
