@@ -38,6 +38,29 @@ Public Class MyCommands
 
 #End Region
 
+#Region "SUBBASE"
+
+    <CommandMethod("SDT_CRIAR_SUPERFICIE_SUBBASE", CommandFlags.Modal)>
+    Public Sub CriarSubbase()
+
+        Dim spec As New CorridorSurfaceBuilderService.SurfaceSpec With {
+            .Suffix = "_SUBBASE",
+            .IniFile = "SDT_SubbaseSurfaces.ini",
+            .DefaultCodes = New String() {"Subbase", "SUBBASE"},
+            .OverhangMode = "BottomLinks"
+        }
+
+        CriarSurface(spec, "[SDT] SUBBASE concluído.")
+    End Sub
+
+    <CommandMethod("SDT_EDITAR_CODES_SUBBASE", CommandFlags.Modal)>
+    Public Sub EditarCodesSubbase()
+        EditarCodesIni("SDT_SubbaseSurfaces.ini", New String() {"Subbase", "SUBBASE"}, "SUBBASE")
+    End Sub
+
+#End Region
+
+
 #Region "TOP"
 
     <CommandMethod("SDT_CRIAR_SUPERFICIE_TOP", CommandFlags.Modal)>
