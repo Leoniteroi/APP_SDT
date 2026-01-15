@@ -62,6 +62,7 @@
     <Compile Include="CorridorSurfaceBuilderService.vb" />
     <Compile Include="IniCodesRepository.vb" />
     <Compile Include="OverhangCorrector.vb" />
+    <Compile Include="SurfaceCFTBatchService.vb" />
     <Compile Include="SurfaceLimpezaBatchService.vb" />
     <Compile Include="SurfaceLimpezaService.vb" />
     <Compile Include="TinSurfaceService.vb" />

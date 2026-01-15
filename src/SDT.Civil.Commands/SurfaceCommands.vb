@@ -19,7 +19,7 @@ Imports RegistryKey = Autodesk.AutoCAD.Runtime.RegistryKey
 ' - Referência a System.Drawing
 ' Se o .vbproj for SDK-style: incluir <UseWindowsForms>true</UseWindowsForms>
 
-Public Class SurfaceLimpezaCommands
+Public Class SurfaceCommands
     <CommandMethod("SDT_CRIAR_SUPERFICIES_LIMPEZA", CommandFlags.Modal)>
     Public Sub SDT_CRIAR_SUPERFICIES_LIMPEZA()
 
@@ -55,11 +55,69 @@ Public Class SurfaceLimpezaCommands
 
     End Sub
 
+    <CommandMethod("SDT_CRIAR_SUPERFICIES_CFT", CommandFlags.Modal)>
+    Public Sub SDT_CRIAR_SUPERFICIES_CFT()
+
+        Dim ctx As AcadContext = Nothing
+        Dim err As String = ""
+
+        If Not AcadContext.TryCreate(ctx, err) Then Return
+
+
+        Dim espessuraCFTCorte As Double = PromptEspessuraCFT_Corte(ctx.Ed)
+        If espessuraCFTCorte <= 0 Then
+            ctx.Ed.WriteMessage(Environment.NewLine & "[SDT] Espessura inválida.")
+            Return
+        End If
+
+        Dim espessuraCFTAterro As Double = PromptEspessuraCFT_Aterro(ctx.Ed)
+        If espessuraCFTAterro <= 0 Then
+            ctx.Ed.WriteMessage(Environment.NewLine & "[SDT] Espessura inválida.")
+            Return
+        End If
+
+        TransactionRunner.RunWrite(
+            ctx.Db,
+            Sub(tr As Transaction)
+
+                Dim cft_aterro_Suffix As String = "_ATERRO_CFT"
+                Dim cft_corte_Suffix As String = "_CORTE_CFT"
+                Dim subbase_Suffix As String = "_SUBBASE"
+
+                Dim n As Integer = SDT.Civil.SurfaceCFTBatchService.RunAllCorridors(tr, ctx.Db, ctx.CivDoc, ctx.Ed, espessuraCFTCorte, espessuraCFTAterro, cft_aterro_Suffix, cft_corte_Suffix, subbase_Suffix)
+
+                ctx.Ed.WriteMessage(Environment.NewLine & "[SDT] Concluído. Superfícies CFT's criadas: " & n.ToString() & ".")
+            End Sub)
+
+    End Sub
+
     Private Function PromptEspessura(ed As Editor) As Double
-        Dim pdo As New PromptDoubleOptions(Environment.NewLine & "Espessura da limpeza (cm): ")
+        Dim pdo As New PromptDoubleOptions(Environment.NewLine & "Espessura da camada (cm): ")
         pdo.AllowNegative = False
         pdo.AllowZero = False
         pdo.DefaultValue = 20.0
+
+        Dim pdr As PromptDoubleResult = ed.GetDouble(pdo)
+        If pdr.Status <> PromptStatus.OK Then Return -1
+        Return pdr.Value
+    End Function
+
+    Private Function PromptEspessuraCFT_Corte(ed As Editor) As Double
+        Dim pdo As New PromptDoubleOptions(Environment.NewLine & "Espessura da camada de CFT de corte (cm): ")
+        pdo.AllowNegative = False
+        pdo.AllowZero = False
+        pdo.DefaultValue = 40.0
+
+        Dim pdr As PromptDoubleResult = ed.GetDouble(pdo)
+        If pdr.Status <> PromptStatus.OK Then Return -1
+        Return pdr.Value
+    End Function
+
+    Private Function PromptEspessuraCFT_Aterro(ed As Editor) As Double
+        Dim pdo As New PromptDoubleOptions(Environment.NewLine & "Espessura da camada de CFT de aterro (cm): ")
+        pdo.AllowNegative = False
+        pdo.AllowZero = False
+        pdo.DefaultValue = 60.0
 
         Dim pdr As PromptDoubleResult = ed.GetDouble(pdo)
         If pdr.Status <> PromptStatus.OK Then Return -1

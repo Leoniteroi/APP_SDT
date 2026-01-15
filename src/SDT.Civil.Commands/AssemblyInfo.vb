@@ -18,4 +18,4 @@ Imports Autodesk.AutoCAD.Runtime
 ' Registro de comandos (AutoCAD .NET)
 <Assembly: CommandClass(GetType(MyCommands))>
 <Assembly: CommandClass(GetType(Cmd_ListarBoundaries))>
-<Assembly: CommandClass(GetType(SurfaceLimpezaCommands))>
+<Assembly: CommandClass(GetType(SurfaceCommands))>
