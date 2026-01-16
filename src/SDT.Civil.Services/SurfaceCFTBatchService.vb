@@ -61,10 +61,10 @@ Namespace SDT.Civil
 
                 ' motor: clona TN subbase + raise
                 Dim aterrocftId As ObjectId = TinSurfaceService.CloneTinSurface(db, tr, civDoc, subbaseSurf, corr.Name & cft_aterro_Suffix, ed)
-                TinSurfaceService.RaiseTinSurface(TryCast(tr.GetObject(aterrocftId, OpenMode.ForWrite), TinSurface), espessuraCm_CFTaterro)
+                TinSurfaceService.RaiseTinSurface(TryCast(tr.GetObject(aterrocftId, OpenMode.ForWrite), TinSurface), espessuraCm_CFTaterro / 100)
 
                 Dim cortecftId As ObjectId = TinSurfaceService.CloneTinSurface(db, tr, civDoc, subbaseSurf, corr.Name & cft_corte_Suffix, ed)
-                TinSurfaceService.RaiseTinSurface(TryCast(tr.GetObject(cortecftId, OpenMode.ForWrite), TinSurface), espessuraCm_CFTcorte)
+                TinSurfaceService.RaiseTinSurface(TryCast(tr.GetObject(cortecftId, OpenMode.ForWrite), TinSurface), espessuraCm_CFTcorte / 100)
 
                 'If limpezaId.IsNull Then
                 '    ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao criar '{limpezaName}'.")

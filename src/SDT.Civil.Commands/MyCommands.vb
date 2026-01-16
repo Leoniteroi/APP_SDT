@@ -46,7 +46,7 @@ Public Class MyCommands
         Dim spec As New CorridorSurfaceBuilderService.SurfaceSpec With {
             .Suffix = "_SUBBASE",
             .IniFile = "SDT_SubbaseSurfaces.ini",
-            .DefaultCodes = New String() {"SubBase", "SUBBASE"},
+            .DefaultCodes = New String() {"SubBase", "Subbase_Acost", "SUBBASE"},
             .OverhangMode = "BottomLinks"
         }
 
@@ -55,7 +55,7 @@ Public Class MyCommands
 
     <CommandMethod("SDT_EDITAR_CODES_SUBBASE", CommandFlags.Modal)>
     Public Sub EditarCodesSubbase()
-        EditarCodesIni("SDT_SubbaseSurfaces.ini", New String() {"SubBase", "SUBBASE"}, "SUBBASE")
+        EditarCodesIni("SDT_SubbaseSurfaces.ini", New String() {"SubBase", "Subbase_Acost", "SUBBASE"}, "SUBBASE")
     End Sub
 
 #End Region
