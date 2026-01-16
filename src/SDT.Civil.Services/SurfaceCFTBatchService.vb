@@ -66,13 +66,18 @@ Namespace SDT.Civil
                 Dim cortecftId As ObjectId = TinSurfaceService.CloneTinSurface(db, tr, civDoc, subbaseSurf, corr.Name & cft_corte_Suffix, ed)
                 TinSurfaceService.RaiseTinSurface(TryCast(tr.GetObject(cortecftId, OpenMode.ForWrite), TinSurface), espessuraCm_CFTcorte / 100)
 
-                'If limpezaId.IsNull Then
-                '    ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao criar '{limpezaName}'.")
-                '    Continue For
-                'End If
+                If aterrocftId.IsNull Then
+                    ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao criar '{corr.Name & cft_aterro_Suffix}'.")
+                    Continue For
+                End If
 
-                'created += 1
-                'ed.WriteMessage(Environment.NewLine & $"[SDT] OK: '{limpezaName}' criado (TN + boundary '{datumSurf.Name}').")
+                If cortecftId.IsNull Then
+                    ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao criar '{corr.Name & cft_corte_Suffix}'.")
+                    Continue For
+                End If
+
+                created += 1
+                ed.WriteMessage(Environment.NewLine & $"[SDT] OK: '{corr.Name}' criado (CFT Aterro/Corte).")
             Next
 
             Return created
