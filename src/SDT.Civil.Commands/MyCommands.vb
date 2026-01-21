@@ -86,6 +86,17 @@ Public Class MyCommands
 #Region "Common"
     Public Shared ForceRecreateSurface As Boolean = False
 
+    <CommandMethod("SDT_GERAL", CommandFlags.Modal)>
+    Public Sub RotinaGeral()
+        CriarDatum()
+        CriarTop()
+        CriarSubbase()
+
+        Dim surf As New SurfaceCommands
+        surf.SDT_CRIAR_SUPERFICIES_LIMPEZA()
+        surf.SDT_CRIAR_SUPERFICIES_CFT()
+    End Sub
+
     <CommandMethod("SDT_COR_SURF_MODE")>
     Public Shared Sub SetSurfaceMode()
         ForceRecreateSurface = Not ForceRecreateSurface
