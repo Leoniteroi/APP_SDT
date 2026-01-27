@@ -2,14 +2,10 @@ Option Strict On
 Option Explicit On
 
 Imports System
-Imports System.Collections.Generic
 Imports Autodesk.AutoCAD.DatabaseServices
 Imports Autodesk.AutoCAD.EditorInput
-Imports Autodesk.AutoCAD.Geometry
 Imports Autodesk.Civil.ApplicationServices
 Imports Autodesk.Civil.DatabaseServices
-Imports SDT.Drawing
-Imports SDT.Geometry
 
 Namespace SDT.Civil
 

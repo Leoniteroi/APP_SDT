@@ -50,6 +50,10 @@ Namespace SDT.Civil
 
                 Dim surfName As String = corr.Name & spec.Suffix
 
+                If recreateSurface = True Then
+                    RemoveCorridorSurfaceIfExists(corr, surfName)
+                End If
+
 
                 'Tenta pegar a surface existente
                 Dim corSurf As CorridorSurface = TryGetCorridorSurface(corr, surfName)
@@ -57,7 +61,7 @@ Namespace SDT.Civil
                 If corSurf IsNot Nothing Then
                     If recreateSurface Then
                         'Remove e recria (comportamento atual)
-                        RemoveCorridorSurfaceIfExists(corr, surfName)
+                        'RemoveCorridorSurfaceIfExists(corr, surfName)
                         'corSurf = Nothing
                         Try
                             corSurf = corr.CorridorSurfaces.Add(surfName)
