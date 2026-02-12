@@ -3,6 +3,7 @@ Option Explicit On
 
 Imports System
 Imports System.Collections.Generic
+Imports Autodesk.Aec.Modeler
 Imports Autodesk.AutoCAD.DatabaseServices
 Imports Autodesk.AutoCAD.EditorInput
 Imports Autodesk.AutoCAD.Geometry
@@ -10,6 +11,8 @@ Imports Autodesk.Civil.ApplicationServices
 Imports Autodesk.Civil.DatabaseServices
 Imports SDT.Drawing
 Imports SDT.Geometry
+Imports SDT.Civil
+
 
 Namespace SDT.Civil
 
@@ -53,31 +56,6 @@ Namespace SDT.Civil
                 If corrId.IsNull Then Continue For
 
                 Dim corr As Corridor = TryCast(tr.GetObject(corrId, OpenMode.ForRead), Corridor)
-                If corr Is Nothing Then Continue For
-
-                ' localizar surface "*_DATUM_OUTER"
-                Dim datumSurf As CorridorSurface = FindCorridorSurfaceBySuffix(corr, datumSurfaceSuffix)
-                If datumSurf Is Nothing Then
-                    ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': sem surface '*{datumSurfaceSuffix}'.")
-                    Continue For
-                End If
-
-                ' extrair outer boundary(s) (gera polylines temporárias)
-                Dim boundaryPlIds As ObjectIdCollection = ExtractOuterBoundariesAsPolylines(tr, ms, datumSurf, layerOuterTmp)
-                If boundaryPlIds Is Nothing OrElse boundaryPlIds.Count = 0 Then
-                    ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': '{datumSurf.Name}' sem OuterBoundary.")
-                    Continue For
-                End If
-
-                ' usar o MAIOR contorno 2D (contorno externo principal)
-                Dim bestBoundaryId As ObjectId = ChooseLargestPolyline2D(tr, boundaryPlIds)
-                If bestBoundaryId.IsNull Then
-                    For Each pid As ObjectId In boundaryPlIds
-                        TinSurfaceService.SafeErase(tr, pid)
-                    Next
-                    ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao selecionar boundary.")
-                    Continue For
-                End If
 
                 ' nome final: "{Corridor}_LIMPEZA" (ou com prefixo)
                 Dim limpezaName As String
@@ -87,22 +65,56 @@ Namespace SDT.Civil
                     limpezaName = $"{limpezaPrefix}_{corr.Name}_LIMPEZA"
                 End If
 
-                ' motor: clona TN base + raise + boundary
-                Dim limpezaId As ObjectId = SurfaceLimpezaService.Run(
-                    tr, db, civDoc, ed, tnBaseSurfaceId, espessuraCm, bestBoundaryId, limpezaName)
+                If corr Is Nothing Then Continue For
 
-                ' limpar polylines temporárias
-                For Each pid As ObjectId In boundaryPlIds
-                    TinSurfaceService.SafeErase(tr, pid)
-                Next
+                Dim IdSurf As ObjectId = SDT.Civil.TinSurfaceService.FindTinSurfaceIdByName(tr, civDoc, limpezaName)
 
-                If limpezaId.IsNull Then
-                    ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao criar '{limpezaName}'.")
-                    Continue For
+                If IdSurf.IsNull Then 'EXECUTA SE A SUPERFICIE NÃO EXISTIR
+
+                    ' localizar surface "*_DATUM_OUTER"
+                    Dim datumSurf As CorridorSurface = FindCorridorSurfaceBySuffix(corr, datumSurfaceSuffix)
+                    If datumSurf Is Nothing Then
+                        ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': sem surface '*{datumSurfaceSuffix}'.")
+                        Continue For
+                    End If
+
+                    ' extrair outer boundary(s) (gera polylines temporárias)
+                    Dim boundaryPlIds As ObjectIdCollection = ExtractOuterBoundariesAsPolylines(tr, ms, datumSurf, layerOuterTmp)
+                    If boundaryPlIds Is Nothing OrElse boundaryPlIds.Count = 0 Then
+                        ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': '{datumSurf.Name}' sem OuterBoundary.")
+                        Continue For
+                    End If
+
+                    ' usar o MAIOR contorno 2D (contorno externo principal)
+                    Dim bestBoundaryId As ObjectId = ChooseLargestPolyline2D(tr, boundaryPlIds)
+                    If bestBoundaryId.IsNull Then
+                        For Each pid As ObjectId In boundaryPlIds
+                            TinSurfaceService.SafeErase(tr, pid)
+                        Next
+                        ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao selecionar boundary.")
+                        Continue For
+                    End If
+
+
+
+
+                    ' motor: clona TN base + raise + boundary
+                    Dim limpezaId As ObjectId = SurfaceLimpezaService.Run(
+                        tr, db, civDoc, ed, tnBaseSurfaceId, espessuraCm, bestBoundaryId, limpezaName)
+
+                    ' limpar polylines temporárias
+                    For Each pid As ObjectId In boundaryPlIds
+                        TinSurfaceService.SafeErase(tr, pid)
+                    Next
+
+                    If limpezaId.IsNull Then
+                        ed.WriteMessage(Environment.NewLine & $"[SDT] Corredor '{corr.Name}': falha ao criar '{limpezaName}'.")
+                        Continue For
+                    End If
+
+                    created += 1
+                    ed.WriteMessage(Environment.NewLine & $"[SDT] OK: '{limpezaName}' criado (TN + boundary '{datumSurf.Name}').")
                 End If
-
-                created += 1
-                ed.WriteMessage(Environment.NewLine & $"[SDT] OK: '{limpezaName}' criado (TN + boundary '{datumSurf.Name}').")
             Next
 
             Return created
@@ -118,6 +130,7 @@ Namespace SDT.Civil
             Next
             Return Nothing
         End Function
+
 
         Private Shared Function ExtractOuterBoundariesAsPolylines(tr As Transaction,
                                                                  ms As BlockTableRecord,
@@ -211,6 +224,7 @@ Namespace SDT.Civil
             area += (pLast.X * p0.Y) - (p0.X * pLast.Y)
             Return Math.Abs(area) * 0.5
         End Function
+
 
     End Class
 
