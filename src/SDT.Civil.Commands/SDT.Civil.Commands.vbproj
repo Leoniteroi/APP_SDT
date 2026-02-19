@@ -65,6 +65,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Label_Assembly.vb" />
     <Compile Include="MyCommands.vb" />
     <Compile Include="SurfaceCommands.vb" />
     <Compile Include="Cmd_ListarBoundaries.vb" />

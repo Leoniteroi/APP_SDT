@@ -1,6 +1,7 @@
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 Imports Autodesk.AutoCAD.Runtime
+Imports SDT.Civil.Commands
 
 <Assembly: AssemblyTitle("SDT.Civil.Commands")>
 <Assembly: AssemblyDescription("SDT toolkit for Civil 3D 2024")>
@@ -19,3 +20,5 @@ Imports Autodesk.AutoCAD.Runtime
 <Assembly: CommandClass(GetType(MyCommands))>
 <Assembly: CommandClass(GetType(Cmd_ListarBoundaries))>
 <Assembly: CommandClass(GetType(SurfaceCommands))>
+<Assembly: CommandClass(GetType(LabelAssembly))>
+
