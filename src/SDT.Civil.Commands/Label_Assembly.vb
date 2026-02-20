@@ -86,9 +86,6 @@ Namespace SDT.Civil.Commands
             ' Atualiza SOMENTE os fields contidos nesses MTexts (sem REGENALL)
             UpdateOnlyFields(db, ed, createdTextIds)
 
-            ' Opcional (fallback): força UPDATEFIELD só no "Previous selection"
-            ' doc.SendStringToExecute("_.UPDATEFIELD _P ", True, False, False)
-
             ' Regen leve
             ed.Regen()
 
