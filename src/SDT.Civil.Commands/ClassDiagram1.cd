@@ -1,0 +1,128 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyCommands">
+    <Position X="3.5" Y="2.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>gAAAAgACAAAAAAAGAQAAACAABAAAAAAAAACAAACAAAA=</HashCode>
+      <FileName>MyCommands.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="System.Object" Collapsed="true">
+    <Position X="3.5" Y="1.25" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="BoundaryGeometryUtils">
+    <Position X="5.75" Y="2.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>BoundaryGeometryUtils.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Cmd_ListarBoundaries">
+    <Position X="8" Y="2.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>CAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Cmd_ListarBoundaries.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SDT.Civil.Commands.LabelAssembly">
+    <Position X="11" Y="2.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAIAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Label_Assembly.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="LayerUtils">
+    <Position X="13.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+      <FileName>LayerUtils.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="PolylineUtils">
+    <Position X="15.5" Y="2.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>PolylineUtils.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SurfaceCommands">
+    <Position X="17.75" Y="2.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAACAAAAAAAAAAAACBAAAAAAAAAAAAAAAIAAACAABA=</HashCode>
+      <FileName>SurfaceCommands.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TinSurfacePicker">
+    <Position X="20.5" Y="2.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAAAAAAAEAAAAAAAAAAAgAAAABAAAAAAAAEAAAA=</HashCode>
+      <FileName>SurfaceCommands.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="TinSurfaceItem">
+    <Position X="22.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAADAAAAAAAAAAAEAAAAAAQAAAAAAACAAAAAAAAAAAA=</HashCode>
+      <FileName>SurfaceCommands.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SDT.Civil.OverhangCorrector">
+    <Position X="6.25" Y="10" Width="2.75" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Civil.SurfaceLimpezaBatchService">
+    <Position X="6.25" Y="11.25" Width="2.75" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Civil.SurfaceLimpezaService">
+    <Position X="6.25" Y="12.5" Width="2.75" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Civil.TinSurfaceService">
+    <Position X="6.25" Y="13.75" Width="2.75" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Civil.IniCodesRepository">
+    <Position X="6.25" Y="8.25" Width="2.75" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Civil.CorridorSurfaceBuilderService">
+    <Position X="6.25" Y="6.75" Width="2.75" />
+    <NestedTypes>
+      <Class Name="SDT.Civil.CorridorSurfaceBuilderService.SurfaceSpec" Collapsed="true">
+        <TypeIdentifier />
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Core.AcadContext">
+    <Position X="9.5" Y="6.75" Width="2.25" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Core.Log">
+    <Position X="9.5" Y="9" Width="2.25" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Core.TransactionRunner">
+    <Position X="9.5" Y="10.5" Width="2.25" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Drawing.LayerService">
+    <Position X="12.25" Y="6.75" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Geometry.BoundaryRingExtractor">
+    <Position X="14.25" Y="6.75" Width="2" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Geometry.PolylineFactory">
+    <Position X="14.25" Y="8" Width="2" />
+    <TypeIdentifier />
+  </Class>
+  <Class Name="SDT.Geometry.RingMetrics">
+    <Position X="14.25" Y="9.25" Width="2" />
+    <TypeIdentifier />
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
