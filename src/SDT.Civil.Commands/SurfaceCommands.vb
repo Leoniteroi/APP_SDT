@@ -92,7 +92,7 @@ Public Class SurfaceCommands
     End Sub
 
     Private Function PromptEspessura(ed As Editor) As Double
-        Dim pdo As New PromptDoubleOptions(Environment.NewLine & "Espessura da camada (cm): ")
+        Dim pdo As New PromptDoubleOptions(Environment.NewLine & "Espessura da camada de limpeza (cm): ")
         pdo.AllowNegative = False
         pdo.AllowZero = False
         pdo.DefaultValue = 20.0
